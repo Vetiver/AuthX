@@ -1,0 +1,72 @@
+version: '3.9'
+services:
+  authX:
+    build:
+      context: ./authX
+    hostname: authX
+    ports:
+      - "8888:8888" 
+    environment:
+    - ProfilerAddr=0.0.0.0:6060
+    - HTTP_PORT=8080
+    - DATABASE_URL=postgres://authx:authx_password@postgres:5432/authx?sslmode=disable
+    - REDIS_ADDR=redis:6379
+    - REDIS_PASSWORD=
+    - JWT_SECRET=local-dev-secret
+    - JWT_ACCESS_TTL=15m
+    - KAFKA_BROKERS=kafka:29092
+    - KAFKA_AUTH_EVENTS_TOPIC=authx.auth.events
+    - KAFKA_AUTH_EVENTS_DLQ_TOPIC=authx.auth.events.dlq
+    - KAFKA_AUDIT_CONSUMER_GROUP=authx-audit-consumer
+    - KAFKA_CLIENT_ID=authx
+    - KAFKA_REQUIRED_ACKS=all
+
+    volumes:
+      - ./authX/:/app
+    restart: always
+
+  postgresql-authX:
+    image: library/postgres:13-alpine
+    hostname: postgresql-authX
+    ports:
+      - 5449:5432
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun
+    volumes:
+      - database_authX:/var/lib/postgresql/data
+      - ./postgresql/sql_init/:/docker-entrypoint-initdb.d/
+    restart: unless-stopped
+    environment:
+      - PGUSER=authX_api_admin
+      - PGDATABASE=authX_api_bd
+      - POSTGRES_HOST=postgresql-authX
+      - POSTGRES_DB=authX_api_bd
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=authX_api_admin
+      - POSTGRES_PASSWORD=qwe
+    healthcheck:
+      test: [ "CMD", "pg_isready", "-q", "-d", "authX_api_bd", "-U", "authX_api_admin" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  redis-authX:
+    image: redis:7-alpine
+    hostname: redis-authX
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/redis/data
+    restart: unless-stopped
+    command: redis-server --appendonly yes --notify-keyspace-events Ex
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  database_authX:
+  redis_data:
