@@ -30,6 +30,13 @@ type UserLoginResp struct {
 	Token string `json:"token"`
 }
 
+type ValidateResponse struct {
+	Valid  bool   `json:"valid"`
+	UserID string `json:"user_id"`
+	Email  string `json:"email"`
+	Role   string `json:"role"`
+}
+
 type PostgreRepo interface {
 	Create(ctx context.Context, user *User) error
 	GetByEmail(ctx context.Context, email string) (*User, error)

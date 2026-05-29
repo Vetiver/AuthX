@@ -1,22 +1,32 @@
 package transport
 
 import (
+	"authX/authX/internal/middleware"
 	"authX/authX/pkg"
 	"authX/authX/transport/handlers"
+	"authX/authX/utils"
+	"context"
 
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 )
 
+type RedisRepo interface {
+	IsBlacklisted(ctx context.Context, tokenID string) (bool, error)
+}
 type HttpServer struct {
-	logger   *zap.Logger
-	httpPort string
+	logger     *zap.Logger
+	httpPort   string
+	redisDB    RedisRepo
+	jwtManager *utils.JWTManager
 }
 
-func NewHttpServer(logger *zap.Logger, httpPort string) *HttpServer {
+func NewHttpServer(logger *zap.Logger, httpPort string, redisDB RedisRepo, jwtManager *utils.JWTManager) *HttpServer {
 	return &HttpServer{
-		logger:   logger,
-		httpPort: httpPort,
+		logger:     logger,
+		httpPort:   httpPort,
+		redisDB:    redisDB,
+		jwtManager: jwtManager,
 	}
 }
 
@@ -32,8 +42,13 @@ func (h *HttpServer) StartHTTPServer(handlers *handlers.BaseHandler) {
 	{
 		auth.POST("/login", handlers.Login)
 		auth.POST("/register", handlers.Register)
-		// auth.POST("/logout", handlers.Logout)
-		// auth.POST("/refresh", handlers.RefreshToken)
+	}
+
+	authProtected := router.Group("/auth")
+	authProtected.Use(middleware.AuthMiddleware(h.jwtManager, h.redisDB, h.logger))
+	{
+		authProtected.GET("/validate")
+		authProtected.GET("/roles", handlers.GetRoles)
 	}
 
 	h.logger.Info("HTTP server is running on port", zap.String("port", h.httpPort))

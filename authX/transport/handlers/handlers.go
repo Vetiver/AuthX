@@ -6,6 +6,7 @@ import (
 	"authX/authX/utils/constants"
 	"context"
 	"net/http"
+	"strings"
 	"sync"
 
 	"github.com/gin-gonic/gin"
@@ -15,6 +16,8 @@ import (
 type DomainService interface {
 	RegisterUser(ctx context.Context, dto domain.RegisterUserDto) error
 	Login(ctx context.Context, dto domain.LoginUserDto) (*domain.UserLoginResp, error)
+	ValidateToken(ctx context.Context, tokenString string) (*domain.ValidateResponse, error)
+	GetRoles() []string
 }
 
 type RegisterReq struct {
@@ -99,5 +102,46 @@ func (h *BaseHandler) Login(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"code": "SUCCESS",
 		"data": resp,
+	})
+}
+
+func (h *BaseHandler) Validate(c *gin.Context) {
+	authHeader := c.GetHeader("Authorization")
+	if authHeader == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"code":    "NO_TOKEN",
+			"message": "authorization header required",
+		})
+		return
+	}
+
+	parts := strings.SplitN(authHeader, " ", 2)
+	if len(parts) != 2 || parts[0] != "Bearer" {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"code":    "INVALID_FORMAT",
+			"message": "invalid authorization format",
+		})
+		return
+	}
+
+	resp, err := h.domainService.ValidateToken(c.Request.Context(), parts[1])
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"code":    "TOKEN_INVALID",
+			"message": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"code": "SUCCESS",
+		"data": resp,
+	})
+}
+
+func (h *BaseHandler) GetRoles(c *gin.Context) {
+	c.JSON(http.StatusOK, gin.H{
+		"code": "SUCCESS",
+		"data": h.domainService.GetRoles(),
 	})
 }

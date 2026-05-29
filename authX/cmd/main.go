@@ -43,7 +43,7 @@ func main() {
 	hasher := utils.NewBcryptHasher(bcrypt.DefaultCost)
 	domainService := domain.NewDomainService(logger, config, database, hasher, jwtManager, redisDB)
 	httpHandlers := handlers.NewBaseHandler(logger, domainService, config)
-	httpServer := transport.NewHttpServer(logger, config.HTTPAddr)
+	httpServer := transport.NewHttpServer(logger, config.HTTPAddr, redisDB, jwtManager)
 	// utils.StartPprofServer(":6066")
 	// done := make(chan struct{})
 

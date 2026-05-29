@@ -132,3 +132,30 @@ func (s *DomainService) Login(ctx context.Context, dto LoginUserDto) (*UserLogin
 		Token: newToken,
 	}, nil
 }
+
+func (s *DomainService) ValidateToken(ctx context.Context, tokenString string) (*ValidateResponse, error) {
+	claims, err := s.jwtManager.Validate(tokenString)
+	if err != nil {
+		return nil, fmt.Errorf(constants.TokenNotValid)
+	}
+
+	isBlacklisted, err := s.redisDB.IsBlacklisted(ctx, claims.TokenID)
+	if err != nil {
+		s.logger.Error("Failed to check blacklist", zap.Error(err))
+		return nil, fmt.Errorf(constants.Internal)
+	}
+	if isBlacklisted {
+		return nil, fmt.Errorf(constants.TokenNotValid)
+	}
+
+	return &ValidateResponse{
+		Valid:  true,
+		UserID: claims.UserID,
+		Email:  claims.Email,
+		Role:   claims.Role,
+	}, nil
+}
+
+func (s *DomainService) GetRoles() []string {
+	return constants.BaseRoles
+}

@@ -11,3 +11,5 @@ const (
 	EventTypeRegister = "user_registered"
 	EventTypeSignIn   = "user_signIn"
 )
+
+var BaseRoles = []string{"admin", "user"}
