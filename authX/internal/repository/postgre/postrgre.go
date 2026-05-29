@@ -1,7 +1,7 @@
 package postgre
 
 import (
-	"authX/authX/utils/config"
+	"authX/utils/config"
 	"context"
 
 	"github.com/jackc/pgx/v4/pgxpool"

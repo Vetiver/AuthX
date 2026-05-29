@@ -1,9 +1,9 @@
 package domain
 
 import (
-	"authX/authX/utils"
-	"authX/authX/utils/config"
-	"authX/authX/utils/constants"
+	"authX/utils"
+	"authX/utils/config"
+	"authX/utils/constants"
 	"context"
 	"fmt"
 	"time"

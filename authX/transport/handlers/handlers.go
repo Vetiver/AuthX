@@ -1,9 +1,9 @@
 package handlers
 
 import (
-	"authX/authX/internal/domain"
-	"authX/authX/utils/config"
-	"authX/authX/utils/constants"
+	"authX/internal/domain"
+	"authX/utils/config"
+	"authX/utils/constants"
 	"context"
 	"net/http"
 	"strings"

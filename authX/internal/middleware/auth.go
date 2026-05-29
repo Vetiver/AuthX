@@ -1,11 +1,10 @@
 package middleware
 
 import (
+	"authX/utils"
 	"context"
 	"net/http"
 	"strings"
-
-	"authX/authX/utils"
 
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"

@@ -1,14 +1,14 @@
 package maim
 
 import (
-	"authX/authX/internal/domain"
-	"authX/authX/internal/repository/postgre"
-	"authX/authX/internal/repository/redis"
-	"authX/authX/pkg"
-	"authX/authX/transport"
-	"authX/authX/transport/handlers"
-	"authX/authX/utils"
-	"authX/authX/utils/config"
+	"authX/internal/domain"
+	"authX/internal/repository/postgre"
+	"authX/internal/repository/redis"
+	"authX/pkg"
+	"authX/transport"
+	"authX/transport/handlers"
+	"authX/utils"
+	"authX/utils/config"
 	"context"
 	"sync"
 

@@ -1,10 +1,10 @@
 package transport
 
 import (
-	"authX/authX/internal/middleware"
-	"authX/authX/pkg"
-	"authX/authX/transport/handlers"
-	"authX/authX/utils"
+	"authX/internal/middleware"
+	"authX/pkg"
+	"authX/transport/handlers"
+	"authX/utils"
 	"context"
 
 	"github.com/gin-gonic/gin"

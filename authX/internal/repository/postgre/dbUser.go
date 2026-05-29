@@ -1,7 +1,7 @@
 package postgre
 
 import (
-	"authX/authX/internal/domain"
+	"authX/internal/domain"
 	"context"
 	"errors"
 	"fmt"
