@@ -8,7 +8,7 @@ import (
 func (db *DB) Migrate(ctx context.Context) error {
 	//Для ролей наверное можно потом добавить ENUM
 	migrations := map[string]string{
-		"CREATE_AUDIT_EVENTS": `CREATE TABLE IF NOT EXIST audit_events (
+		"CREATE_AUDIT_EVENTS": `CREATE TABLE IF NOT EXISTS audit_events (
     	id UUID PRIMARY KEY,
     	event_type TEXT NOT NULL,
     	occurred_at TIMESTAMPTZ NOT NULL,
@@ -21,17 +21,17 @@ func (db *DB) Migrate(ctx context.Context) error {
     	created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 	);
 	`,
-		"CREATE_USERS": `CREATE TABLE IF NOT EXIST users (
-    	id INT PRIMARY KEY,
+		"CREATE_USERS": `CREATE TABLE IF NOT EXISTS users (
+    	id SERIAL PRIMARY KEY,
     	email TEXT NOT NULL,
     	role TEXT NULL,
 		password TEXT NOT NULL,
     	created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 	);`,
-		"CREATE_INDEX_idx_audit_events_user":        "CREATE INDEX idx_audit_events_user_id ON audit_events(user_id);",
-		"CREATE_INDEX_idx_audit_events_email":       "CREATE INDEX idx_audit_events_email ON audit_events(email);",
-		"CREATE_INDEX_idx_audit_events_event_type":  "CREATE INDEX idx_audit_events_event_type ON audit_events(event_type);",
-		"CREATE_INDEX_idx_audit_events_occurred_at": "CREATE INDEX idx_audit_events_occurred_at ON audit_events(occurred_at);",
+		"CREATE_INDEX_idx_audit_events_user":        "CREATE INDEX IF NOT EXISTS idx_audit_events_user_id ON audit_events(user_id);",
+		"CREATE_INDEX_idx_audit_events_email":       "CREATE INDEX IF NOT EXISTS idx_audit_events_email ON audit_events(email);",
+		"CREATE_INDEX_idx_audit_events_event_type":  "CREATE INDEX IF NOT EXISTS idx_audit_events_event_type ON audit_events(event_type);",
+		"CREATE_INDEX_idx_audit_events_occurred_at": "CREATE INDEX IF NOT EXISTS idx_audit_events_occurred_at ON audit_events(occurred_at);",
 	}
 
 	conn, err := db.pool.Acquire(ctx)

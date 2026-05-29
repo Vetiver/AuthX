@@ -9,12 +9,11 @@ import (
 	"go.uber.org/zap"
 )
 
-func (r *RedisDB) SaveUserToken(ctx context.Context, userID string, token string, ttl time.Duration) error {
-	key := fmt.Sprintf("user_token:%s", userID)
+func (r *RedisDB) SaveUserToken(ctx context.Context, userID int, token string, ttl time.Duration) error {
+	key := fmt.Sprintf("user_token:%v", userID)
 
 	if err := r.client.Set(ctx, key, token, ttl).Err(); err != nil {
 		r.logger.Error("Failed to save user token",
-			zap.String("user_id", userID),
 			zap.Error(err),
 		)
 		return fmt.Errorf("save user token: %w", err)
@@ -23,8 +22,8 @@ func (r *RedisDB) SaveUserToken(ctx context.Context, userID string, token string
 	return nil
 }
 
-func (r *RedisDB) GetUserToken(ctx context.Context, userID string) (string, error) {
-	key := fmt.Sprintf("user_token:%s", userID)
+func (r *RedisDB) GetUserToken(ctx context.Context, userID int) (string, error) {
+	key := fmt.Sprintf("user_token:%v", userID)
 
 	token, err := r.client.Get(ctx, key).Result()
 	if err == redis.Nil {
@@ -32,7 +31,6 @@ func (r *RedisDB) GetUserToken(ctx context.Context, userID string) (string, erro
 	}
 	if err != nil {
 		r.logger.Error("Failed to get user token",
-			zap.String("user_id", userID),
 			zap.Error(err),
 		)
 		return "", fmt.Errorf("get user token: %w", err)

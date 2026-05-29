@@ -1,16 +1,16 @@
 version: '3.9'
 services:
-  authX:
+  authx:
     build:
       context: ./authX
     hostname: authX
     ports:
-      - "8888:8888" 
+      - "8888:8080" 
     environment:
     - ProfilerAddr=0.0.0.0:6060
     - HTTP_PORT=8080
-    - DATABASE_URL=postgres://authx:authx_password@postgres:5432/authx?sslmode=disable
-    - REDIS_ADDR=redis:6379
+    - DATABASE_URL=postgres://authX_api_admin:qwe@postgresql-authx:5432/authX_api_bd?sslmode=disable
+    - REDIS_ADDR=redis-authx:6379
     - REDIS_PASSWORD=
     - JWT_SECRET=local-dev-secret
     - JWT_ACCESS_TTL=15m
@@ -25,7 +25,7 @@ services:
       - ./authX/:/app
     restart: always
 
-  postgresql-authX:
+  postgresql-authx:
     image: library/postgres:13-alpine
     hostname: postgresql-authX
     ports:
@@ -35,13 +35,13 @@ services:
     devices:
       - /dev/net/tun
     volumes:
-      - database_authX:/var/lib/postgresql/data
+      - database_authx:/var/lib/postgresql/data
       - ./postgresql/sql_init/:/docker-entrypoint-initdb.d/
     restart: unless-stopped
     environment:
       - PGUSER=authX_api_admin
       - PGDATABASE=authX_api_bd
-      - POSTGRES_HOST=postgresql-authX
+      - POSTGRES_HOST=postgresql-authx
       - POSTGRES_DB=authX_api_bd
       - POSTGRES_PORT=5432
       - POSTGRES_USER=authX_api_admin
@@ -52,7 +52,7 @@ services:
       timeout: 5s
       retries: 3
 
-  redis-authX:
+  redis-authx:
     image: redis:7-alpine
     hostname: redis-authX
     ports:
@@ -68,5 +68,5 @@ services:
       retries: 3
 
 volumes:
-  database_authX:
+  database_authx:
   redis_data:

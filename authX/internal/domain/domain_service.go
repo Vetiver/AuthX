@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/gofrs/uuid"
 	"go.uber.org/zap"
 )
 
@@ -48,14 +47,7 @@ func (s *DomainService) RegisterUser(ctx context.Context, dto RegisterUserDto) e
 		return fmt.Errorf(constants.Internal)
 	}
 
-	newID, err := uuid.NewV7()
-	if err != nil {
-		s.logger.Error("Failed to generate UUID", zap.Error(err))
-		return fmt.Errorf(constants.Internal)
-	}
-
 	user := &User{
-		ID:       newID,
 		Email:    dto.Email,
 		Role:     constants.UserRoleBase,
 		Password: hashedPassword,
@@ -67,7 +59,6 @@ func (s *DomainService) RegisterUser(ctx context.Context, dto RegisterUserDto) e
 	}
 
 	s.logger.Info("User registered",
-		zap.String("user_id", user.ID.String()),
 		zap.String("email", user.Email),
 	)
 
@@ -88,7 +79,7 @@ func (s *DomainService) Login(ctx context.Context, dto LoginUserDto) (*UserLogin
 		return nil, fmt.Errorf(constants.PasswordNotWalid)
 	}
 
-	oldToken, err := s.redisDB.GetUserToken(ctx, user.ID.String())
+	oldToken, err := s.redisDB.GetUserToken(ctx, user.ID)
 	if err != nil {
 		s.logger.Error("Failed to get old token", zap.Error(err))
 	}
@@ -110,20 +101,19 @@ func (s *DomainService) Login(ctx context.Context, dto LoginUserDto) (*UserLogin
 		role = user.Role
 	}
 
-	newToken, _, err := s.jwtManager.Generate(user.ID.String(), user.Email, role)
+	newToken, _, err := s.jwtManager.Generate(user.ID, user.Email, role)
 	if err != nil {
 		s.logger.Error("Failed to generate token", zap.Error(err))
 		return nil, fmt.Errorf("internal error")
 	}
 
 	tokenTTL := 15 * time.Minute
-	if err := s.redisDB.SaveUserToken(ctx, user.ID.String(), newToken, tokenTTL); err != nil {
+	if err := s.redisDB.SaveUserToken(ctx, user.ID, newToken, tokenTTL); err != nil {
 		s.logger.Error("Failed to save token in Redis", zap.Error(err))
 		return nil, fmt.Errorf("internal error")
 	}
 
 	s.logger.Info("User logged in",
-		zap.String("user_id", user.ID.String()),
 		zap.String("email", user.Email),
 	)
 

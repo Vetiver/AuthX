@@ -12,12 +12,11 @@ import (
 
 func (r *DB) Create(ctx context.Context, user *domain.User) error {
 	query := `
-		INSERT INTO users (id, email, role, password, created_at)
-		VALUES ($1, $2, $3, $4, NOW())
+		INSERT INTO users (email, role, password, created_at)
+		VALUES ($1, $2, $3, NOW())
 	`
 
 	_, err := r.pool.Exec(ctx, query,
-		user.ID,
 		user.Email,
 		user.Role,
 		user.Password,

@@ -4,11 +4,10 @@ import (
 	"context"
 	"time"
 
-	"github.com/gofrs/uuid"
 )
 
 type User struct {
-	ID        uuid.UUID `json:"id"`
+	ID        int       `json:"id"`
 	Email     string    `json:"email"`
 	Password  string    `json:"password"`
 	Role      string    `json:"role,omitempty"`
@@ -32,7 +31,7 @@ type UserLoginResp struct {
 
 type ValidateResponse struct {
 	Valid  bool   `json:"valid"`
-	UserID string `json:"user_id"`
+	UserID int `json:"user_id"`
 	Email  string `json:"email"`
 	Role   string `json:"role"`
 }
@@ -43,8 +42,8 @@ type PostgreRepo interface {
 }
 
 type RedisRepo interface {
-	SaveUserToken(ctx context.Context, userID string, token string, ttl time.Duration) error
-	GetUserToken(ctx context.Context, userID string) (string, error)
+	SaveUserToken(ctx context.Context, userID int, token string, ttl time.Duration) error
+	GetUserToken(ctx context.Context, userID int) (string, error)
 	AddToBlacklist(ctx context.Context, tokenID string, ttl time.Duration) error
 	IsBlacklisted(ctx context.Context, tokenID string) (bool, error)
 }

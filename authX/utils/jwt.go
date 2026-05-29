@@ -15,7 +15,7 @@ type JWTManager struct {
 }
 
 type Claims struct {
-	UserID  string `json:"user_id"`
+	UserID  int `json:"user_id"`
 	Email   string `json:"email"`
 	Role    string `json:"role"`
 	TokenID string `json:"token_id"`
@@ -29,7 +29,7 @@ func NewJWTManager(secret string, ttl time.Duration) *JWTManager {
 	}
 }
 
-func (m *JWTManager) Generate(userID, email, role string) (string, string, error) {
+func (m *JWTManager) Generate(userID int, email, role string) (string, string, error) {
 	tokenID, err := generateTokenID()
 	if err != nil {
 		return "", "", err

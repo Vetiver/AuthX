@@ -53,7 +53,7 @@ func (h *HttpServer) StartHTTPServer(handlers *handlers.BaseHandler) {
 
 	h.logger.Info("HTTP server is running on port", zap.String("port", h.httpPort))
 
-	if err := router.Run(":" + h.httpPort); err != nil {
+	if err := router.Run(h.httpPort); err != nil {
 		h.logger.Fatal("failed to start HTTP server", zap.Error(err))
 	}
 }
