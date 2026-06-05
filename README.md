@@ -1,4 +1,3 @@
-```markdown
 # AuthX — микросервис аутентификации и авторизации с Kafka-аудитом
 
 ## Описание
@@ -19,7 +18,6 @@ docker exec authx-kafka-1 kafka-topics --bootstrap-server localhost:9092 --creat
 
 # Проверить топики
 docker exec authx-kafka-1 kafka-topics --bootstrap-server localhost:9092 --list
-```
 
 ## Компоненты
 
