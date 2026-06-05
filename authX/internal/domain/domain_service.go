@@ -1,13 +1,15 @@
 package domain
 
 import (
+	"authX/internal/kafka"
 	"authX/utils"
 	"authX/utils/config"
 	"authX/utils/constants"
-	"context"
+	"encoding/json"
 	"fmt"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 )
 
@@ -31,7 +33,7 @@ func NewDomainService(logger *zap.Logger, config *config.Config, postgreRepo Pos
 	}
 }
 
-func (s *DomainService) RegisterUser(ctx context.Context, dto RegisterUserDto) error {
+func (s *DomainService) RegisterUser(ctx *gin.Context, dto RegisterUserDto) error {
 	existingUser, err := s.postgreDB.GetByEmail(ctx, dto.Email)
 	if err != nil {
 		s.logger.Error("Failed to check email", zap.Error(err))
@@ -53,7 +55,13 @@ func (s *DomainService) RegisterUser(ctx context.Context, dto RegisterUserDto) e
 		Password: hashedPassword,
 	}
 
-	if err := s.postgreDB.Create(ctx, user); err != nil {
+	if err := s.postgreDB.CreateUserWithEvent(ctx, user, kafka.AuditEvent{
+		EventType: constants.EventTypeRegister,
+		Email:     user.Email,
+		Role:      user.Role,
+		IP:        ctx.ClientIP(),
+		Metadata:  json.RawMessage(`{}`),
+	}); err != nil {
 		s.logger.Error("Failed to create user", zap.Error(err))
 		return fmt.Errorf(constants.Internal)
 	}
@@ -65,17 +73,33 @@ func (s *DomainService) RegisterUser(ctx context.Context, dto RegisterUserDto) e
 	return nil
 }
 
-func (s *DomainService) Login(ctx context.Context, dto LoginUserDto) (*UserLoginResp, error) {
+func (s *DomainService) Login(ctx *gin.Context, dto LoginUserDto) (*UserLoginResp, error) {
 	user, err := s.postgreDB.GetByEmail(ctx, dto.Email)
 	if err != nil {
 		s.logger.Error("Failed to find user", zap.Error(err))
 		return nil, fmt.Errorf(constants.Internal)
 	}
 	if user == nil {
+		s.postgreDB.SaveOutboxEvent(ctx, kafka.AuditEvent{
+			EventType: constants.EventTypeAuthLoginFailed,
+			Email:     dto.Email,
+			IP:        ctx.ClientIP(),
+			UserAgent: ctx.GetHeader("User-Agent"),
+			Metadata:  json.RawMessage(`{"reason": "user_not_found"}`),
+		})
 		return nil, fmt.Errorf(constants.NotFound)
 	}
 
 	if !s.hasher.Check(dto.Password, user.Password) {
+		s.postgreDB.SaveOutboxEvent(ctx, kafka.AuditEvent{
+			EventType: constants.EventTypeAuthLoginFailed,
+			UserID:    user.ID,
+			Email:     dto.Email,
+			Role:      user.Role,
+			IP:        ctx.ClientIP(),
+			UserAgent: ctx.GetHeader("User-Agent"),
+			Metadata:  json.RawMessage(`{"reason": "invalid_password"}`),
+		})
 		return nil, fmt.Errorf(constants.PasswordNotWalid)
 	}
 
@@ -113,6 +137,16 @@ func (s *DomainService) Login(ctx context.Context, dto LoginUserDto) (*UserLogin
 		return nil, fmt.Errorf("internal error")
 	}
 
+	s.postgreDB.SaveOutboxEvent(ctx, kafka.AuditEvent{
+		EventType: constants.EventTypeSignIn,
+		UserID:    user.ID,
+		Email:     user.Email,
+		Role:      role,
+		IP:        ctx.ClientIP(),
+		Metadata:  json.RawMessage(`{}`),
+		UserAgent: ctx.GetHeader("User-Agent"),
+	})
+
 	s.logger.Info("User logged in",
 		zap.String("email", user.Email),
 	)
@@ -123,7 +157,7 @@ func (s *DomainService) Login(ctx context.Context, dto LoginUserDto) (*UserLogin
 	}, nil
 }
 
-func (s *DomainService) ValidateToken(ctx context.Context, tokenString string) (*ValidateResponse, error) {
+func (s *DomainService) ValidateToken(ctx *gin.Context, tokenString string) (*ValidateResponse, error) {
 	claims, err := s.jwtManager.Validate(tokenString)
 	if err != nil {
 		return nil, fmt.Errorf(constants.TokenNotValid)

@@ -12,7 +12,7 @@ func (db *DB) Migrate(ctx context.Context) error {
     	id UUID PRIMARY KEY,
     	event_type TEXT NOT NULL,
     	occurred_at TIMESTAMPTZ NOT NULL,
-    	user_id UUID NULL,
+    	user_id INT NULL,
     	email TEXT NOT NULL,
     	role TEXT NULL,
     	ip TEXT NULL,
@@ -27,6 +27,13 @@ func (db *DB) Migrate(ctx context.Context) error {
     	role TEXT NULL,
 		password TEXT NOT NULL,
     	created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+	);`,
+		"CREATE_OUTBOX_EVENTS": `CREATE TABLE IF NOT EXISTS outbox_events (
+    	id SERIAL PRIMARY KEY,
+    	event_type TEXT NOT NULL,
+    	payload JSONB NOT NULL,
+    	created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    	processed BOOLEAN NOT NULL DEFAULT false
 	);`,
 		"CREATE_INDEX_idx_audit_events_user":        "CREATE INDEX IF NOT EXISTS idx_audit_events_user_id ON audit_events(user_id);",
 		"CREATE_INDEX_idx_audit_events_email":       "CREATE INDEX IF NOT EXISTS idx_audit_events_email ON audit_events(email);",

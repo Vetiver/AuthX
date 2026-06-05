@@ -4,7 +4,6 @@ import (
 	"authX/internal/domain"
 	"authX/utils/config"
 	"authX/utils/constants"
-	"context"
 	"net/http"
 	"strings"
 	"sync"
@@ -14,9 +13,9 @@ import (
 )
 
 type DomainService interface {
-	RegisterUser(ctx context.Context, dto domain.RegisterUserDto) error
-	Login(ctx context.Context, dto domain.LoginUserDto) (*domain.UserLoginResp, error)
-	ValidateToken(ctx context.Context, tokenString string) (*domain.ValidateResponse, error)
+	RegisterUser(ctx *gin.Context, dto domain.RegisterUserDto) error
+	Login(ctx *gin.Context, dto domain.LoginUserDto) (*domain.UserLoginResp, error)
+	ValidateToken(ctx *gin.Context, tokenString string) (*domain.ValidateResponse, error)
 	GetRoles() []string
 }
 
@@ -87,7 +86,7 @@ func (h *BaseHandler) Login(c *gin.Context) {
 		return
 	}
 
-	resp, err := h.domainService.Login(c.Request.Context(), domain.LoginUserDto{
+	resp, err := h.domainService.Login(c, domain.LoginUserDto{
 		Email:    req.Email,
 		Password: req.Password,
 	})
@@ -124,7 +123,7 @@ func (h *BaseHandler) Validate(c *gin.Context) {
 		return
 	}
 
-	resp, err := h.domainService.ValidateToken(c.Request.Context(), parts[1])
+	resp, err := h.domainService.ValidateToken(c, parts[1])
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"code":    "TOKEN_INVALID",

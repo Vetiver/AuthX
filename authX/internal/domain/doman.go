@@ -1,9 +1,9 @@
 package domain
 
 import (
+	"authX/internal/kafka"
 	"context"
 	"time"
-
 )
 
 type User struct {
@@ -37,8 +37,9 @@ type ValidateResponse struct {
 }
 
 type PostgreRepo interface {
-	Create(ctx context.Context, user *User) error
+	CreateUserWithEvent(ctx context.Context, user *User, event kafka.AuditEvent) error
 	GetByEmail(ctx context.Context, email string) (*User, error)
+	SaveOutboxEvent(ctx context.Context, event kafka.AuditEvent) error
 }
 
 type RedisRepo interface {
